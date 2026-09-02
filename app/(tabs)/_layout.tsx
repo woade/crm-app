@@ -41,12 +41,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ color }) => <TabIcon symbol="⭐" color={color} />,
         }}
       />
+      <Tabs.Screen name="tasks" options={{ href: null }} />
       <Tabs.Screen
-        name="tasks"
+        name="schedule"
         options={{
-          title: 'Tasks',
+          title: 'Schedule',
           headerShown: false,
-          tabBarIcon: ({ color }) => <TabIcon symbol="✅" color={color} />,
+          tabBarIcon: ({ color }) => <TabIcon symbol="📅" color={color} />,
         }}
       />
       <Tabs.Screen

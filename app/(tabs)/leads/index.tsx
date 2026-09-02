@@ -10,12 +10,15 @@ import {
   ScrollView,
   Linking,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { getNoWebsiteOnly } from '@/lib/settings';
 import { Lead, LEAD_STATUSES, LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, LeadStatus } from '@/types';
 
 const FILTER_TABS: Array<LeadStatus | 'all'> = ['all', ...LEAD_STATUSES];
+const ALL_CITIES = '';
+const cityKey = (l: Lead) => (l.city ?? '').trim() || 'Unknown';
 
 export default function LeadsListScreen() {
   const router = useRouter();
@@ -23,6 +26,7 @@ export default function LeadsListScreen() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<LeadStatus | 'all'>('all');
+  const [city, setCity] = useState(ALL_CITIES);
   const [noWebsiteOnly, setNoWebsiteOnly] = useState(true);
 
   const load = useCallback(async () => {
@@ -74,10 +78,27 @@ export default function LeadsListScreen() {
     [leads, noWebsiteOnly]
   );
 
+  // Cities present in the current lead list, each paired with how many of
+  // its leads are still "new" — an easy way to jump to one city at a time.
+  const cityOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const l of websiteScoped) {
+      const c = cityKey(l);
+      if (l.status === 'new') counts.set(c, (counts.get(c) ?? 0) + 1);
+      else if (!counts.has(c)) counts.set(c, 0);
+    }
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [websiteScoped]);
+
+  const cityScoped = useMemo(
+    () => (city ? websiteScoped.filter((l) => cityKey(l) === city) : websiteScoped),
+    [websiteScoped, city]
+  );
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
     const qDigits = q.replace(/\D/g, '');
-    return websiteScoped.filter((l) => {
+    return cityScoped.filter((l) => {
       if (tab !== 'all' && l.status !== tab) return false;
       if (!q) return true;
       const nameMatch =
@@ -85,13 +106,13 @@ export default function LeadsListScreen() {
       const phoneMatch = qDigits.length >= 3 && (l.phone ?? '').replace(/\D/g, '').includes(qDigits);
       return nameMatch || phoneMatch;
     });
-  }, [websiteScoped, query, tab]);
+  }, [cityScoped, query, tab]);
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: websiteScoped.length };
-    LEAD_STATUSES.forEach((s) => (c[s] = websiteScoped.filter((l) => l.status === s).length));
+    const c: Record<string, number> = { all: cityScoped.length };
+    LEAD_STATUSES.forEach((s) => (c[s] = cityScoped.filter((l) => l.status === s).length));
     return c;
-  }, [websiteScoped]);
+  }, [cityScoped]);
 
   return (
     <View style={styles.container}>
@@ -102,24 +123,35 @@ export default function LeadsListScreen() {
         onChangeText={setQuery}
       />
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.tabsRow}
-        contentContainerStyle={styles.tabsRowContent}
-      >
-        {FILTER_TABS.map((t) => (
-          <TouchableOpacity
-            key={t}
-            style={[styles.tabChip, tab === t && styles.tabChipActive]}
-            onPress={() => setTab(t)}
-          >
-            <Text style={[styles.tabChipText, tab === t && styles.tabChipTextActive]} numberOfLines={1}>
-              {t === 'all' ? 'All' : LEAD_STATUS_LABELS[t]} {counts[t] ? `(${counts[t]})` : ''}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <View style={styles.filterBar}>
+        <View style={styles.cityPickerWrap}>
+          <Picker selectedValue={city} onValueChange={(v) => setCity(v)} style={styles.cityPicker}>
+            <Picker.Item label="All Cities" value={ALL_CITIES} />
+            {cityOptions.map(([c, count]) => (
+              <Picker.Item key={c} label={`${c} (${count})`} value={c} />
+            ))}
+          </Picker>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.tabsRow}
+          contentContainerStyle={styles.tabsRowContent}
+        >
+          {FILTER_TABS.map((t) => (
+            <TouchableOpacity
+              key={t}
+              style={[styles.tabChip, tab === t && styles.tabChipActive]}
+              onPress={() => setTab(t)}
+            >
+              <Text style={[styles.tabChipText, tab === t && styles.tabChipTextActive]} numberOfLines={1}>
+                {t === 'all' ? 'All' : LEAD_STATUS_LABELS[t]} {counts[t] ? `(${counts[t]})` : ''}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
       {loading ? (
         <ActivityIndicator style={{ marginTop: 40 }} />
@@ -195,10 +227,27 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   noWebBadgeText: { fontSize: 10, color: '#c94a4a', fontWeight: '700' },
+  filterBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 4,
+    height: 44,
+  },
+  cityPickerWrap: {
+    width: 132,
+    height: 40,
+    marginLeft: 12,
+    borderRadius: 10,
+    backgroundColor: '#f1f2f6',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  cityPicker: { width: 132 },
   // Fixed height (rather than relying on the ScrollView sizing to its
   // content) because react-native-web can otherwise collapse a horizontal
   // ScrollView to near-zero height in some flex layouts.
-  tabsRow: { marginTop: 12, marginBottom: 4, height: 44, flexGrow: 0, flexShrink: 0 },
+  tabsRow: { flex: 1, height: 44, flexGrow: 1, flexShrink: 1 },
   tabsRowContent: { paddingHorizontal: 12, paddingRight: 32, alignItems: 'center' },
   tabChip: {
     paddingHorizontal: 14,
