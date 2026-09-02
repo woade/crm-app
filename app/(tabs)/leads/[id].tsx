@@ -10,9 +10,10 @@ import {
   Linking,
   Alert,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect, useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import { Lead, LEAD_STATUSES, LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, LeadStatus } from '@/types';
+import { Lead, LEAD_STATUSES, LEAD_STATUS_LABELS, LeadStatus } from '@/types';
 
 export default function LeadDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -126,30 +127,12 @@ export default function LeadDetailScreen() {
         )}
 
         <Text style={styles.label}>Status</Text>
-        <View style={styles.statusChipsWrap}>
-          {LEAD_STATUSES.map((s) => {
-            const active = lead.status === s;
-            return (
-              <TouchableOpacity
-                key={s}
-                style={[
-                  styles.statusChip,
-                  { borderColor: LEAD_STATUS_COLORS[s] },
-                  active && { backgroundColor: LEAD_STATUS_COLORS[s] },
-                ]}
-                onPress={() => handleStatusChange(s)}
-              >
-                <Text
-                  style={[
-                    styles.statusChipText,
-                    { color: active ? '#fff' : LEAD_STATUS_COLORS[s] },
-                  ]}
-                >
-                  {LEAD_STATUS_LABELS[s]}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+        <View style={styles.statusPickerWrap}>
+          <Picker selectedValue={lead.status} onValueChange={(s) => handleStatusChange(s as LeadStatus)}>
+            {LEAD_STATUSES.map((s) => (
+              <Picker.Item key={s} label={LEAD_STATUS_LABELS[s]} value={s} />
+            ))}
+          </Picker>
         </View>
 
         <TouchableOpacity style={styles.logCallButton} onPress={handleLogCall} disabled={logging}>
@@ -205,14 +188,13 @@ const styles = StyleSheet.create({
   },
   noWebsiteText: { color: '#a15c00', fontSize: 13, fontWeight: '600' },
   label: { fontSize: 13, color: '#666', marginBottom: 6, marginTop: 22, fontWeight: '600' },
-  statusChipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  statusChip: {
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+  statusPickerWrap: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    backgroundColor: '#fafafa',
+    overflow: 'hidden',
   },
-  statusChipText: { fontSize: 12, fontWeight: '700' },
   logCallButton: {
     backgroundColor: '#22a35e',
     borderRadius: 10,
