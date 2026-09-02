@@ -14,6 +14,7 @@ import { Picker } from '@react-native-picker/picker';
 import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { getNoWebsiteOnly } from '@/lib/settings';
+import { useCopyToClipboard } from '@/lib/clipboard';
 import { Lead, LEAD_STATUSES, LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, LeadStatus } from '@/types';
 
 // "Contacted" is dropped from this filter row — those leads still show up
@@ -31,6 +32,7 @@ export default function LeadsListScreen() {
   const [tab, setTab] = useState<LeadStatus | 'all'>('new');
   const [city, setCity] = useState(ALL_CITIES);
   const [noWebsiteOnly, setNoWebsiteOnly] = useState(true);
+  const { copied, copy } = useCopyToClipboard();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -186,7 +188,11 @@ export default function LeadsListScreen() {
                   {item.industry ? `${item.industry} · ` : ''}
                   {item.city ?? ''}
                 </Text>
-                {!!item.phone && <Text style={styles.phone}>{item.phone}</Text>}
+                {!!item.phone && (
+                  <TouchableOpacity onPress={() => copy(item.phone!)} hitSlop={{ top: 6, bottom: 6, left: 0, right: 40 }}>
+                    <Text style={styles.phone}>{copied === item.phone ? '✓ Copied' : item.phone}</Text>
+                  </TouchableOpacity>
+                )}
                 <Text style={styles.status}>{LEAD_STATUS_LABELS[item.status]}</Text>
               </View>
               {!!item.phone && (

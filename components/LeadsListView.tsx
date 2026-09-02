@@ -12,6 +12,7 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { getNoWebsiteOnly } from '@/lib/settings';
+import { useCopyToClipboard } from '@/lib/clipboard';
 import { Lead, LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, LeadStatus } from '@/types';
 
 const hasWebsite = (l: Lead) => !!l.website || l.manual_has_site;
@@ -60,6 +61,7 @@ export default function LeadsListView({ fixedStatus, emptyText }: Props) {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [noWebsiteOnly, setNoWebsiteOnlyState] = useState(true);
+  const { copied, copy } = useCopyToClipboard();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -125,7 +127,11 @@ export default function LeadsListView({ fixedStatus, emptyText }: Props) {
                   {item.industry ? `${item.industry} · ` : ''}
                   {item.city ?? ''}
                 </Text>
-                {!!item.phone && <Text style={styles.phone}>{item.phone}</Text>}
+                {!!item.phone && (
+                  <TouchableOpacity onPress={() => copy(item.phone!)} hitSlop={{ top: 6, bottom: 6, left: 0, right: 40 }}>
+                    <Text style={styles.phone}>{copied === item.phone ? '✓ Copied' : item.phone}</Text>
+                  </TouchableOpacity>
+                )}
                 {!fixedStatus && <Text style={styles.status}>{LEAD_STATUS_LABELS[item.status]}</Text>}
               </View>
               {!!item.phone && (

@@ -13,6 +13,7 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect, useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { useCopyToClipboard } from '@/lib/clipboard';
 import { Lead, LEAD_STATUSES, LEAD_STATUS_LABELS, LeadStatus } from '@/types';
 
 export default function LeadDetailScreen() {
@@ -23,6 +24,7 @@ export default function LeadDetailScreen() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -85,6 +87,12 @@ export default function LeadDetailScreen() {
           {lead.city ?? ''}
         </Text>
         {!!lead.address && <Text style={styles.address}>{lead.address}</Text>}
+
+        {!!lead.phone && (
+          <TouchableOpacity onPress={() => copy(lead.phone!)} hitSlop={{ top: 8, bottom: 8, left: 0, right: 40 }}>
+            <Text style={styles.phoneBig}>{copied === lead.phone ? '✓ Copied to clipboard' : lead.phone}</Text>
+          </TouchableOpacity>
+        )}
 
         {lead.rating != null && (
           <Text style={styles.rating}>
@@ -165,6 +173,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 22, fontWeight: '700', color: '#1a1a2e' },
   sub: { fontSize: 14, color: '#666', marginTop: 4 },
   address: { fontSize: 13, color: '#888', marginTop: 4 },
+  phoneBig: { fontSize: 20, fontWeight: '700', color: '#2f5bff', marginTop: 8 },
   rating: { fontSize: 13, color: '#b8860b', marginTop: 8 },
   actionsRow: { flexDirection: 'row', gap: 8, marginTop: 16, flexWrap: 'wrap' },
   actionBtn: {
