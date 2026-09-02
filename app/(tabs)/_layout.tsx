@@ -28,13 +28,6 @@ export default function TabsLayout() {
       <Tabs.Screen name="deals" options={{ href: null }} />
       <Tabs.Screen name="contacted" options={{ href: null }} />
       <Tabs.Screen
-        name="metrics"
-        options={{
-          title: 'Metrics',
-          tabBarIcon: ({ color }) => <TabIcon symbol="📊" color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="interested"
         options={{
           title: 'Interested',
@@ -48,6 +41,13 @@ export default function TabsLayout() {
           title: 'Schedule',
           headerShown: false,
           tabBarIcon: ({ color }) => <TabIcon symbol="📅" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="metrics"
+        options={{
+          title: 'Metrics',
+          tabBarIcon: ({ color }) => <TabIcon symbol="📊" color={color} />,
         }}
       />
       <Tabs.Screen

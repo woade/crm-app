@@ -129,7 +129,10 @@ export default function LeadDetailScreen() {
         <Text style={styles.label}>Status</Text>
         <View style={styles.statusPickerWrap}>
           <Picker selectedValue={lead.status} onValueChange={(s) => handleStatusChange(s as LeadStatus)}>
-            {LEAD_STATUSES.map((s) => (
+            {/* "Contacted" is no longer offered as a choice going forward,
+                but a lead already sitting in that status keeps showing it
+                here so the dropdown doesn't display a blank/invalid value. */}
+            {LEAD_STATUSES.filter((s) => s !== 'contacted' || lead.status === 'contacted').map((s) => (
               <Picker.Item key={s} label={LEAD_STATUS_LABELS[s]} value={s} />
             ))}
           </Picker>

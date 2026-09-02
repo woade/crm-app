@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   addButtonText: { color: '#fff', fontSize: 26, marginTop: -2 },
-  filterRow: { paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center' },
+  filterRow: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 16, paddingVertical: 10 },
   filterText: { color: '#2f5bff', fontSize: 14, fontWeight: '600' },
   row: {
     flexDirection: 'row',

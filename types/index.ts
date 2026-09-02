@@ -94,7 +94,7 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   contacted: '📞 Contacted',
   noanswer: '🔔 No Answer – Follow Up',
   interested: '⭐ Interested',
-  proposal: '📋 Proposal Sent',
+  proposal: '🤝 Meeting Set',
   notinterested: '🚫 Not Interested',
   notvalid: '❌ Not Valid',
 };

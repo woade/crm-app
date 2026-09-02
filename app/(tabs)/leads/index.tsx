@@ -17,8 +17,9 @@ import { getNoWebsiteOnly } from '@/lib/settings';
 import { Lead, LEAD_STATUSES, LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, LeadStatus } from '@/types';
 
 // "Contacted" is dropped from this filter row — those leads still show up
-// under "All", there's just no dedicated tab for the status anymore.
-const FILTER_TABS: Array<LeadStatus | 'all'> = ['all', ...LEAD_STATUSES.filter((s) => s !== 'contacted')];
+// under "All", there's just no dedicated tab for the status anymore. "All"
+// sits at the far right since "New" is the default, most-used view.
+const FILTER_TABS: Array<LeadStatus | 'all'> = [...LEAD_STATUSES.filter((s) => s !== 'contacted'), 'all'];
 const ALL_CITIES = '';
 const cityKey = (l: Lead) => (l.city ?? '').trim() || 'Unknown';
 
@@ -27,7 +28,7 @@ export default function LeadsListScreen() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
-  const [tab, setTab] = useState<LeadStatus | 'all'>('all');
+  const [tab, setTab] = useState<LeadStatus | 'all'>('new');
   const [city, setCity] = useState(ALL_CITIES);
   const [noWebsiteOnly, setNoWebsiteOnly] = useState(true);
 
