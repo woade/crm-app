@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Linking } from 'react-native';
-import { Link, useFocusEffect } from 'expo-router';
+import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { ScheduledCall } from '@/types';
 
@@ -12,6 +12,7 @@ function formatWhen(call: ScheduledCall) {
 }
 
 export default function ScheduleListScreen() {
+  const router = useRouter();
   const [calls, setCalls] = useState<ScheduledCall[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(false);
@@ -44,6 +45,16 @@ export default function ScheduleListScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.topBar}>
+        {/* Cast: expo-router's generated route types haven't picked up this
+            new folder yet in this build environment; the path is valid. */}
+        <Link href={'/(tabs)/schedule/new' as any} asChild>
+          <TouchableOpacity style={styles.addButton}>
+            <Text style={styles.addButtonText}>+</Text>
+          </TouchableOpacity>
+        </Link>
+      </View>
+
       <TouchableOpacity style={styles.filterRow} onPress={() => setShowCompleted((v) => !v)}>
         <Text style={styles.filterText}>{showCompleted ? 'Hide completed' : 'Show completed'}</Text>
       </TouchableOpacity>
@@ -54,7 +65,7 @@ export default function ScheduleListScreen() {
         <FlatList
           data={visible}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingBottom: 100 }}
+          contentContainerStyle={{ paddingBottom: 40 }}
           ListEmptyComponent={
             <Text style={styles.empty}>
               No calls scheduled yet. Tap + to schedule a Zoom or phone call with a lead.
@@ -62,10 +73,10 @@ export default function ScheduleListScreen() {
           }
           renderItem={({ item }) => (
             <View style={styles.row}>
-              <TouchableOpacity onPress={() => toggleComplete(item)} style={styles.checkbox}>
-                <Text style={{ fontSize: 18 }}>{item.completed ? '✅' : '⬜️'}</Text>
-              </TouchableOpacity>
-              <View style={{ flex: 1 }}>
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                onPress={() => router.push(`/(tabs)/schedule/${item.id}` as any)}
+              >
                 <Text style={[styles.name, item.completed && styles.nameDone]}>{item.contact_name}</Text>
                 <Text style={styles.when}>{formatWhen(item)}</Text>
                 {!!item.email && (
@@ -78,7 +89,7 @@ export default function ScheduleListScreen() {
                     {item.note}
                   </Text>
                 )}
-              </View>
+              </TouchableOpacity>
               {!!item.phone && (
                 <TouchableOpacity
                   style={styles.callButton}
@@ -87,25 +98,35 @@ export default function ScheduleListScreen() {
                   <Text style={styles.callButtonText}>📞</Text>
                 </TouchableOpacity>
               )}
+              <TouchableOpacity onPress={() => toggleComplete(item)} style={styles.checkbox}>
+                <Text style={{ fontSize: 18 }}>{item.completed ? '✅' : '⬜️'}</Text>
+              </TouchableOpacity>
             </View>
           )}
         />
       )}
-
-      {/* Cast: expo-router's generated route types haven't picked up this
-          new folder yet in this build environment; the path is valid. */}
-      <Link href={'/(tabs)/schedule/new' as any} asChild>
-        <TouchableOpacity style={styles.fab}>
-          <Text style={styles.fabText}>+</Text>
-        </TouchableOpacity>
-      </Link>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  filterRow: { paddingHorizontal: 16, paddingVertical: 10 },
+  topBar: { alignItems: 'center', paddingTop: 14, paddingBottom: 4 },
+  addButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#2f5bff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+  },
+  addButtonText: { color: '#fff', fontSize: 26, marginTop: -2 },
+  filterRow: { paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center' },
   filterText: { color: '#2f5bff', fontSize: 14, fontWeight: '600' },
   row: {
     flexDirection: 'row',
@@ -115,11 +136,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#eee',
   },
-  checkbox: { marginRight: 12 },
+  checkbox: { marginLeft: 12 },
   name: { fontSize: 16, fontWeight: '600', color: '#1a1a2e' },
   nameDone: { textDecorationLine: 'line-through', color: '#999' },
   when: { fontSize: 13, color: '#2f5bff', marginTop: 2, fontWeight: '500' },
-  overdue: { color: '#d64545' },
   note: { fontSize: 13, color: '#888', marginTop: 2 },
   empty: { textAlign: 'center', marginTop: 60, marginHorizontal: 30, color: '#999' },
   callButton: {
@@ -132,21 +152,4 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   callButtonText: { fontSize: 18 },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#2f5bff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-  },
-  fabText: { color: '#fff', fontSize: 28, marginTop: -2 },
 });

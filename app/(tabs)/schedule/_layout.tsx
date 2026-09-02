@@ -5,6 +5,7 @@ export default function ScheduleLayout() {
     <Stack>
       <Stack.Screen name="index" options={{ title: 'Schedule' }} />
       <Stack.Screen name="new" options={{ title: 'Schedule a Call', presentation: 'modal' }} />
+      <Stack.Screen name="[id]" options={{ title: 'Edit Call', presentation: 'modal' }} />
     </Stack>
   );
 }
