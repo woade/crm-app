@@ -23,7 +23,6 @@ export default function LeadDetailScreen() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [logging, setLogging] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -50,31 +49,27 @@ export default function LeadDetailScreen() {
     return true;
   };
 
+  // Changing the status IS logging a call now — there's no separate "Log a
+  // Call" action anymore, so every status change writes a timestamped
+  // Call History entry noting what it was changed to.
   const handleStatusChange = async (status: LeadStatus) => {
     if (!lead) return;
-    setLead({ ...lead, status });
-    await updateLead({ status });
+    const now = new Date();
+    const entry =
+      now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+      ' ' +
+      now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) +
+      ' → ' +
+      LEAD_STATUS_LABELS[status];
+    const newLog = [...(lead.call_log ?? []), entry];
+    setLead({ ...lead, status, call_log: newLog });
+    await updateLead({ status, call_log: newLog });
   };
 
   const handleSaveNotes = async () => {
     setSaving(true);
     const ok = await updateLead({ notes });
     setSaving(false);
-    if (ok) load();
-  };
-
-  const handleLogCall = async () => {
-    if (!lead) return;
-    setLogging(true);
-    const now = new Date();
-    const entry =
-      now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
-      ' ' +
-      now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    const newLog = [...(lead.call_log ?? []), entry];
-    const newStatus: LeadStatus = lead.status === 'new' ? 'contacted' : lead.status;
-    const ok = await updateLead({ call_log: newLog, status: newStatus });
-    setLogging(false);
     if (ok) load();
   };
 
@@ -138,10 +133,6 @@ export default function LeadDetailScreen() {
           </Picker>
         </View>
 
-        <TouchableOpacity style={styles.logCallButton} onPress={handleLogCall} disabled={logging}>
-          <Text style={styles.logCallButtonText}>{logging ? 'Logging…' : '📞 Log a Call'}</Text>
-        </TouchableOpacity>
-
         <Text style={styles.label}>Notes</Text>
         <TextInput
           style={[styles.input, styles.multiline]}
@@ -198,14 +189,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa',
     overflow: 'hidden',
   },
-  logCallButton: {
-    backgroundColor: '#22a35e',
-    borderRadius: 10,
-    padding: 14,
-    alignItems: 'center',
-    marginTop: 14,
-  },
-  logCallButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
