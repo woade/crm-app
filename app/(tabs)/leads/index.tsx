@@ -195,8 +195,11 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   noWebBadgeText: { fontSize: 10, color: '#c94a4a', fontWeight: '700' },
-  tabsRow: { marginTop: 12, marginBottom: 4, flexGrow: 0 },
-  tabsRowContent: { paddingHorizontal: 12, paddingRight: 32 },
+  // Fixed height (rather than relying on the ScrollView sizing to its
+  // content) because react-native-web can otherwise collapse a horizontal
+  // ScrollView to near-zero height in some flex layouts.
+  tabsRow: { marginTop: 12, marginBottom: 4, height: 44, flexGrow: 0, flexShrink: 0 },
+  tabsRowContent: { paddingHorizontal: 12, paddingRight: 32, alignItems: 'center' },
   tabChip: {
     paddingHorizontal: 14,
     paddingVertical: 9,
