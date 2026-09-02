@@ -135,14 +135,17 @@ export interface Lead {
 }
 
 // Scheduled calls — replaces the old generic Tasks feature. A simple log of
-// an upcoming Zoom/phone call: who with, how to reach them, and when.
+// an upcoming Zoom/phone call: who with, how to reach them, and roughly
+// when (day/time are free text — "Thursday evening" is a valid entry).
 export interface ScheduledCall {
   id: string;
   user_id: string;
   contact_name: string;
   phone: string | null;
   email: string | null;
-  scheduled_at: string;
+  day: string | null;
+  time: string | null;
+  note: string | null;
   completed: boolean;
   created_at: string;
 }

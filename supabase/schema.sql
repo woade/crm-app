@@ -128,14 +128,17 @@ create trigger leads_set_updated_at
 
 -- SCHEDULED CALLS (replaces the generic Tasks feature) -------------------
 -- A simple log of an upcoming Zoom/phone call: who with, how to reach them,
--- and when. Not linked to the leads table — just a quick standalone entry.
+-- and roughly when. Day/time are free text (leads often just say "Thursday
+-- evening") rather than a strict date, so only the contact name is required.
 create table if not exists scheduled_calls (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid not null references auth.users (id) on delete cascade default auth.uid(),
   contact_name text not null,
   phone text,
   email text,
-  scheduled_at timestamptz not null,
+  day text,
+  time text,
+  note text,
   completed boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -145,4 +148,4 @@ alter table scheduled_calls enable row level security;
 create policy "Scheduled calls are owned by the user" on scheduled_calls
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
-create index if not exists scheduled_calls_scheduled_at_idx on scheduled_calls (scheduled_at);
+create index if not exists scheduled_calls_created_at_idx on scheduled_calls (created_at);

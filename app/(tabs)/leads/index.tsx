@@ -16,7 +16,9 @@ import { supabase } from '@/lib/supabase';
 import { getNoWebsiteOnly } from '@/lib/settings';
 import { Lead, LEAD_STATUSES, LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, LeadStatus } from '@/types';
 
-const FILTER_TABS: Array<LeadStatus | 'all'> = ['all', ...LEAD_STATUSES];
+// "Contacted" is dropped from this filter row — those leads still show up
+// under "All", there's just no dedicated tab for the status anymore.
+const FILTER_TABS: Array<LeadStatus | 'all'> = ['all', ...LEAD_STATUSES.filter((s) => s !== 'contacted')];
 const ALL_CITIES = '';
 const cityKey = (l: Lead) => (l.city ?? '').trim() || 'Unknown';
 

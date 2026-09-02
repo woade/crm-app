@@ -4,17 +4,11 @@ import { Link, useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { ScheduledCall } from '@/types';
 
-function formatWhen(iso: string) {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  const dateStr = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-  const timeStr = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-  return `${dateStr} · ${timeStr}`;
-}
-
-function isPast(call: ScheduledCall) {
-  if (call.completed) return false;
-  return new Date(call.scheduled_at) < new Date();
+// Day/time are free text ("Thursday evening" is valid), so this just joins
+// whichever of the two were given rather than trying to parse a real date.
+function formatWhen(call: ScheduledCall) {
+  const parts = [call.day, call.time].filter(Boolean);
+  return parts.length ? parts.join(' · ') : 'No day/time set';
 }
 
 export default function ScheduleListScreen() {
@@ -27,7 +21,7 @@ export default function ScheduleListScreen() {
     const { data, error } = await supabase
       .from('scheduled_calls')
       .select('*')
-      .order('scheduled_at', { ascending: true });
+      .order('created_at', { ascending: false });
     if (!error && data) setCalls(data as ScheduledCall[]);
     setLoading(false);
   }, []);
@@ -73,10 +67,15 @@ export default function ScheduleListScreen() {
               </TouchableOpacity>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.name, item.completed && styles.nameDone]}>{item.contact_name}</Text>
-                <Text style={[styles.when, isPast(item) && styles.overdue]}>{formatWhen(item.scheduled_at)}</Text>
+                <Text style={styles.when}>{formatWhen(item)}</Text>
                 {!!item.email && (
                   <Text style={styles.note} numberOfLines={1}>
                     {item.email}
+                  </Text>
+                )}
+                {!!item.note && (
+                  <Text style={styles.note} numberOfLines={2}>
+                    {item.note}
                   </Text>
                 )}
               </View>
