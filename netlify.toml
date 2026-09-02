@@ -1,0 +1,8 @@
+# This is a single-page app (Expo Router in "single" output mode) — every
+# route is handled by client-side JavaScript after index.html loads. Without
+# this rule, Netlify tries to find an actual file for paths like /leads or
+# /schedule/new and returns 404 on direct load or refresh.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
