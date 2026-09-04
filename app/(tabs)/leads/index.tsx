@@ -119,6 +119,23 @@ export default function LeadsListScreen() {
     return c;
   }, [cityScoped]);
 
+  // Changing status from the list row is the same "status change IS logging
+  // a call" rule as the lead detail screen — updates local state right away
+  // so the row/tab counts don't wait on a round trip, then persists.
+  const handleRowStatusChange = async (item: Lead, status: LeadStatus) => {
+    if (status === item.status) return;
+    const now = new Date();
+    const entry =
+      now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+      ' ' +
+      now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) +
+      ' → ' +
+      LEAD_STATUS_LABELS[status];
+    const newLog = [...(item.call_log ?? []), entry];
+    setLeads((prev) => prev.map((l) => (l.id === item.id ? { ...l, status, call_log: newLog } : l)));
+    await supabase.from('leads').update({ status, call_log: newLog }).eq('id', item.id);
+  };
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -171,11 +188,11 @@ export default function LeadsListScreen() {
             </Text>
           }
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.row, { borderLeftColor: LEAD_STATUS_COLORS[item.status] }]}
-              onPress={() => router.push(`/(tabs)/leads/${item.id}`)}
-            >
-              <View style={{ flex: 1 }}>
+            <View style={[styles.row, { borderLeftColor: LEAD_STATUS_COLORS[item.status] }]}>
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                onPress={() => router.push(`/(tabs)/leads/${item.id}`)}
+              >
                 <View style={styles.nameRow}>
                   <Text style={styles.name}>{item.name}</Text>
                   {!hasWebsite(item) && (
@@ -193,8 +210,23 @@ export default function LeadsListScreen() {
                     <Text style={styles.phone}>{copied === item.phone ? '✓ Copied' : item.phone}</Text>
                   </TouchableOpacity>
                 )}
-                <Text style={styles.status}>{LEAD_STATUS_LABELS[item.status]}</Text>
+              </TouchableOpacity>
+
+              {/* Outside the navigable TouchableOpacity above on purpose —
+                  changing status here shouldn't also open the lead detail
+                  screen. */}
+              <View style={styles.rowStatusPickerWrap}>
+                <Picker
+                  selectedValue={item.status}
+                  onValueChange={(s) => handleRowStatusChange(item, s as LeadStatus)}
+                  style={styles.rowStatusPicker}
+                >
+                  {LEAD_STATUSES.filter((s) => s !== 'contacted' || item.status === 'contacted').map((s) => (
+                    <Picker.Item key={s} label={LEAD_STATUS_LABELS[s]} value={s} />
+                  ))}
+                </Picker>
               </View>
+
               {!!item.phone && (
                 <TouchableOpacity
                   style={styles.callButton}
@@ -203,7 +235,7 @@ export default function LeadsListScreen() {
                   <Text style={styles.callButtonText}>📞</Text>
                 </TouchableOpacity>
               )}
-            </TouchableOpacity>
+            </View>
           )}
         />
       )}
@@ -280,7 +312,16 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, fontWeight: '600', color: '#1a1a2e' },
   sub: { fontSize: 13, color: '#888', marginTop: 2 },
   phone: { fontSize: 13, color: '#2f5bff', marginTop: 2, fontWeight: '500' },
-  status: { fontSize: 12, color: '#555', marginTop: 4 },
+  rowStatusPickerWrap: {
+    width: 130,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#f1f2f6',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    marginLeft: 8,
+  },
+  rowStatusPicker: { width: 130, fontSize: 12 },
   callButton: {
     width: 40,
     height: 40,
