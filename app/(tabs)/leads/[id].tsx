@@ -14,6 +14,8 @@ import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect, useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useCopyToClipboard } from '@/lib/clipboard';
+import { useWorkspace } from '@/context/WorkspaceContext';
+import { useAuth } from '@/context/AuthContext';
 import { Lead, LEAD_STATUSES, LEAD_STATUS_LABELS, LeadStatus } from '@/types';
 
 export default function LeadDetailScreen() {
@@ -27,6 +29,8 @@ export default function LeadDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { copied, copy } = useCopyToClipboard();
+  const { initials } = useWorkspace();
+  const { session } = useAuth();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -46,8 +50,17 @@ export default function LeadDetailScreen() {
     }, [load])
   );
 
+  // Every write stamps who did it, so the list can show a badge for the rep
+  // who last touched a lead. Done here rather than at each call site so no
+  // edit path can quietly skip attribution.
   const updateLead = async (patch: Partial<Lead>) => {
-    const { error } = await supabase.from('leads').update(patch).eq('id', id);
+    const stamped = {
+      ...patch,
+      last_edited_by: session?.user?.id ?? null,
+      last_edited_initials: initials,
+      last_edited_at: new Date().toISOString(),
+    };
+    const { error } = await supabase.from('leads').update(stamped).eq('id', id);
     if (error) {
       Alert.alert('Error', error.message);
       return false;
@@ -92,7 +105,14 @@ export default function LeadDetailScreen() {
     <>
       <Stack.Screen options={{ title: lead.name }} />
       <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
-        <Text style={styles.name}>{lead.name}</Text>
+        <View style={styles.nameRow}>
+          <Text style={styles.name}>{lead.name}</Text>
+          {!!lead.last_edited_initials && (
+            <View style={styles.editedBadge}>
+              <Text style={styles.editedBadgeText}>{lead.last_edited_initials}</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.sub}>
           {lead.industry ? `${lead.industry} · ` : ''}
           {lead.city ?? ''}
@@ -215,7 +235,20 @@ export default function LeadDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  name: { fontSize: 22, fontWeight: '700', color: '#1a1a2e' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  name: { fontSize: 22, fontWeight: '700', color: '#1a1a2e', flexShrink: 1 },
+  editedBadge: {
+    backgroundColor: '#eef0ff',
+    borderWidth: 1,
+    borderColor: '#c9cfff',
+    borderRadius: 999,
+    minWidth: 26,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  editedBadgeText: { fontSize: 12, fontWeight: '800', color: '#4650c4' },
   sub: { fontSize: 14, color: '#666', marginTop: 4 },
   address: { fontSize: 13, color: '#888', marginTop: 4 },
   phoneBig: { fontSize: 20, fontWeight: '700', color: '#2f5bff', marginTop: 8 },

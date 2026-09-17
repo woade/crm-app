@@ -128,6 +128,11 @@ export interface Lead {
   // Separate from `name`, which is the business name from Google Places.
   contact_name: string | null;
   contact_email: string | null;
+  // Who last touched this lead. Initials are denormalised so the list can
+  // render the badge without joining on every row.
+  last_edited_by: string | null;
+  last_edited_initials: string | null;
+  last_edited_at: string | null;
   notes: string | null;
   call_log: string[];
   manual_has_site: boolean;
@@ -152,4 +157,17 @@ export interface ScheduledCall {
   note: string | null;
   completed: boolean;
   created_at: string;
+}
+
+// A hired sales rep with their own login, granted access to the owner's
+// leads. Deleting the row revokes that access without touching their account.
+export interface TeamMember {
+  id: string;
+  owner_id: string;
+  member_id: string;
+  display_name: string | null;
+  initials: string;
+  created_at: string;
+  // Joined from profiles when listing the team in Settings.
+  profiles?: { email: string | null } | null;
 }

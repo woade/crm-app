@@ -15,6 +15,8 @@ import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { getNoWebsiteOnly } from '@/lib/settings';
 import { useCopyToClipboard } from '@/lib/clipboard';
+import { useWorkspace } from '@/context/WorkspaceContext';
+import { useAuth } from '@/context/AuthContext';
 import { Lead, LEAD_STATUSES, LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, LeadStatus } from '@/types';
 
 // "Contacted" is dropped from this filter row — those leads still show up
@@ -26,6 +28,8 @@ const cityKey = (l: Lead) => (l.city ?? '').trim() || 'Unknown';
 
 export default function LeadsListScreen() {
   const router = useRouter();
+  const { initials, isMember } = useWorkspace();
+  const { session } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -132,8 +136,15 @@ export default function LeadsListScreen() {
       ' → ' +
       LEAD_STATUS_LABELS[status];
     const newLog = [...(item.call_log ?? []), entry];
-    setLeads((prev) => prev.map((l) => (l.id === item.id ? { ...l, status, call_log: newLog } : l)));
-    await supabase.from('leads').update({ status, call_log: newLog }).eq('id', item.id);
+    const stamp = {
+      last_edited_by: session?.user?.id ?? null,
+      last_edited_initials: initials,
+      last_edited_at: new Date().toISOString(),
+    };
+    setLeads((prev) =>
+      prev.map((l) => (l.id === item.id ? { ...l, status, call_log: newLog, ...stamp } : l))
+    );
+    await supabase.from('leads').update({ status, call_log: newLog, ...stamp }).eq('id', item.id);
   };
 
   return (
@@ -195,6 +206,11 @@ export default function LeadsListScreen() {
               >
                 <View style={styles.nameRow}>
                   <Text style={styles.name}>{item.name}</Text>
+                  {!!item.last_edited_initials && (
+                    <View style={styles.editedBadge}>
+                      <Text style={styles.editedBadgeText}>{item.last_edited_initials}</Text>
+                    </View>
+                  )}
                   {!hasWebsite(item) && (
                     <View style={styles.noWebBadge}>
                       <Text style={styles.noWebBadgeText}>No Website</Text>
@@ -240,11 +256,16 @@ export default function LeadsListScreen() {
         />
       )}
 
-      <Link href="/(tabs)/leads/new" asChild>
-        <TouchableOpacity style={styles.fab}>
-          <Text style={styles.fabText}>+</Text>
-        </TouchableOpacity>
-      </Link>
+      {/* Reps work the existing pipeline and don't create leads — the
+          database blocks it for them too, so showing the button would just
+          be a dead end. */}
+      {!isMember && (
+        <Link href="/(tabs)/leads/new" asChild>
+          <TouchableOpacity style={styles.fab}>
+            <Text style={styles.fabText}>+</Text>
+          </TouchableOpacity>
+        </Link>
+      )}
     </View>
   );
 }
@@ -268,6 +289,18 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   noWebBadgeText: { fontSize: 10, color: '#c94a4a', fontWeight: '700' },
+  // Initials of whoever last edited this lead, e.g. "B" for a sales rep.
+  editedBadge: {
+    backgroundColor: '#eef0ff',
+    borderWidth: 1,
+    borderColor: '#c9cfff',
+    borderRadius: 999,
+    minWidth: 20,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    alignItems: 'center',
+  },
+  editedBadgeText: { fontSize: 10, fontWeight: '800', color: '#4650c4' },
   filterBar: {
     flexDirection: 'row',
     alignItems: 'center',

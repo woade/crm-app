@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 export default function LeadFormScreen() {
   const router = useRouter();
+  const { ownerId, initials } = useWorkspace();
 
   const [name, setName] = useState('');
   const [industry, setIndustry] = useState('');
@@ -34,7 +36,13 @@ export default function LeadFormScreen() {
       phone: phone.trim() || null,
       website: website.trim() || null,
       status: 'new',
-      user_id: user?.id,
+      // ownerId, not the current user: when a sales rep adds a lead it has to
+      // land in the owner's pile. Stamping it with the rep's own id would
+      // create a lead only they could see.
+      user_id: ownerId ?? user?.id,
+      last_edited_by: user?.id ?? null,
+      last_edited_initials: initials,
+      last_edited_at: new Date().toISOString(),
     });
 
     setSaving(false);

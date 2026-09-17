@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { AuthProvider } from '@/context/AuthContext';
+import { WorkspaceProvider } from '@/context/WorkspaceContext';
 
 export {
   ErrorBoundary,
@@ -8,10 +9,14 @@ export {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
-      </Stack>
+      {/* Inside AuthProvider: it reads the session to work out whether the
+          signed-in user is the owner or a rep on someone's team. */}
+      <WorkspaceProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+      </WorkspaceProvider>
     </AuthProvider>
   );
 }
