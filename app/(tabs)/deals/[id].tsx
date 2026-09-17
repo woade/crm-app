@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import { crossAlert } from '@/lib/alert';
 import { useFocusEffect, useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Deal, Task, ActivityNote, STAGE_LABELS } from '@/types';
@@ -35,14 +36,14 @@ export default function DealDetailScreen() {
   );
 
   const handleDelete = () => {
-    Alert.alert('Delete deal', 'This cannot be undone. Continue?', [
+    crossAlert('Delete deal', 'This cannot be undone. Continue?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
           const { error } = await supabase.from('deals').delete().eq('id', id);
-          if (error) Alert.alert('Error', error.message);
+          if (error) crossAlert('Error', error.message);
           else router.back();
         },
       },
@@ -60,7 +61,7 @@ export default function DealDetailScreen() {
       .insert({ body: newNote.trim(), deal_id: id, user_id: user?.id });
     setPosting(false);
     if (error) {
-      Alert.alert('Error', error.message);
+      crossAlert('Error', error.message);
       return;
     }
     setNewNote('');

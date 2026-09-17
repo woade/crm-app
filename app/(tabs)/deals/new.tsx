@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { crossAlert } from '@/lib/alert';
 import { Picker } from '@react-native-picker/picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -38,7 +39,7 @@ export default function DealFormScreen() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Title required', 'Please enter a deal title.');
+      crossAlert('Title required', 'Please enter a deal title.');
       return;
     }
     setSaving(true);
@@ -59,7 +60,7 @@ export default function DealFormScreen() {
 
     setSaving(false);
     if (result.error) {
-      Alert.alert('Error', result.error.message);
+      crossAlert('Error', result.error.message);
       return;
     }
     router.back();

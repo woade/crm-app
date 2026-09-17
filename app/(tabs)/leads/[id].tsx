@@ -8,8 +8,8 @@ import {
   ActivityIndicator,
   TextInput,
   Linking,
-  Alert,
 } from 'react-native';
+import { crossAlert } from '@/lib/alert';
 import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect, useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -62,7 +62,7 @@ export default function LeadDetailScreen() {
     };
     const { error } = await supabase.from('leads').update(stamped).eq('id', id);
     if (error) {
-      Alert.alert('Error', error.message);
+      crossAlert('Error', error.message);
       return false;
     }
     return true;

@@ -9,6 +9,7 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
@@ -27,6 +28,9 @@ export default function SettingsScreen() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteInitials, setInviteInitials] = useState('');
   const [adding, setAdding] = useState(false);
+  // Inline feedback instead of Alert.alert: Alert is a no-op on react-native-web,
+  // so on the deployed site every error message was silently swallowed.
+  const [teamMsg, setTeamMsg] = useState<{ kind: 'error' | 'ok'; text: string } | null>(null);
 
   useEffect(() => {
     getNoWebsiteOnly().then((v) => {
@@ -59,8 +63,10 @@ export default function SettingsScreen() {
   const handleAddMember = async () => {
     const email = inviteEmail.trim().toLowerCase();
     const ini = inviteInitials.trim().toUpperCase();
+    setTeamMsg(null);
+
     if (!email || !ini) {
-      Alert.alert('Missing info', 'Enter the rep’s email and the initials to show on their edits.');
+      setTeamMsg({ kind: 'error', text: 'Enter both the rep’s email and their initials.' });
       return;
     }
     setAdding(true);
@@ -72,15 +78,15 @@ export default function SettingsScreen() {
 
     if (!profile) {
       setAdding(false);
-      Alert.alert(
-        'No account with that email',
-        'Ask them to open the app and sign up with this exact email first, then add them here.'
-      );
+      setTeamMsg({
+        kind: 'error',
+        text: `No account found for ${email}. They need to open this site and sign up with that exact email first, then add them here.`,
+      });
       return;
     }
     if (profile.id === session?.user?.id) {
       setAdding(false);
-      Alert.alert('That’s you', 'You already have full access to your own leads.');
+      setTeamMsg({ kind: 'error', text: 'That’s your own account — you already have full access.' });
       return;
     }
 
@@ -92,30 +98,42 @@ export default function SettingsScreen() {
     });
     setAdding(false);
     if (error) {
-      Alert.alert('Could not add', error.message);
+      setTeamMsg({ kind: 'error', text: error.message });
       return;
     }
+    setTeamMsg({
+      kind: 'ok',
+      text: `${email} now has access. They should sign out and back in to see your leads.`,
+    });
     setInviteEmail('');
     setInviteInitials('');
     loadTeam();
   };
 
-  const handleRemoveMember = (member: TeamMember) => {
-    Alert.alert(
-      'Remove access?',
-      `${member.profiles?.email ?? member.display_name ?? 'This person'} will immediately stop seeing your leads. Their login still works, and any edits they already made stay put.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            await supabase.from('team_members').delete().eq('id', member.id);
-            loadTeam();
-          },
-        },
-      ]
+  const handleRemoveMember = async (member: TeamMember) => {
+    const who = member.profiles?.email ?? member.display_name ?? 'This person';
+    const question = `${who} will immediately stop seeing your leads. Their login still works, and any edits they already made stay put.`;
+
+    // Alert.alert with buttons doesn't render on web either, so confirm the
+    // native way on a phone and with the browser dialog on the web build.
+    const confirmed =
+      Platform.OS === 'web'
+        ? typeof window !== 'undefined' && window.confirm(question)
+        : await new Promise<boolean>((resolve) =>
+            Alert.alert('Remove access?', question, [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Remove', style: 'destructive', onPress: () => resolve(true) },
+            ])
+          );
+
+    if (!confirmed) return;
+    const { error } = await supabase.from('team_members').delete().eq('id', member.id);
+    setTeamMsg(
+      error
+        ? { kind: 'error', text: error.message }
+        : { kind: 'ok', text: `${who} no longer has access.` }
     );
+    loadTeam();
   };
 
   const handleToggle = async (value: boolean) => {
@@ -206,6 +224,12 @@ export default function SettingsScreen() {
           >
             <Text style={styles.addButtonText}>{adding ? 'Adding…' : 'Give Access'}</Text>
           </TouchableOpacity>
+
+          {!!teamMsg && (
+            <Text style={teamMsg.kind === 'error' ? styles.msgError : styles.msgOk}>
+              {teamMsg.text}
+            </Text>
+          )}
         </>
       )}
 
@@ -265,6 +289,8 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   addButtonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  msgError: { color: '#c0392b', fontSize: 13, lineHeight: 18, marginBottom: 24 },
+  msgOk: { color: '#1e8449', fontSize: 13, lineHeight: 18, marginBottom: 24 },
   sectionTitle: { fontSize: 13, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
   row: {
     flexDirection: 'row',

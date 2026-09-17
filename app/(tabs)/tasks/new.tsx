@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { crossAlert } from '@/lib/alert';
 import { Picker } from '@react-native-picker/picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -32,11 +33,11 @@ export default function TaskFormScreen() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Title required', 'Please enter a task title.');
+      crossAlert('Title required', 'Please enter a task title.');
       return;
     }
     if (dueDate.trim() && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate.trim())) {
-      Alert.alert('Invalid date', 'Use the format YYYY-MM-DD, e.g. 2026-09-15.');
+      crossAlert('Invalid date', 'Use the format YYYY-MM-DD, e.g. 2026-09-15.');
       return;
     }
     setSaving(true);
@@ -54,7 +55,7 @@ export default function TaskFormScreen() {
 
     setSaving(false);
     if (error) {
-      Alert.alert('Error', error.message);
+      crossAlert('Error', error.message);
       return;
     }
     router.back();

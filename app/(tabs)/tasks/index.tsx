@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { crossAlert } from '@/lib/alert';
 import { Link, useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Task } from '@/types';
@@ -36,7 +37,7 @@ export default function TasksListScreen() {
       .update({ completed: !task.completed })
       .eq('id', task.id);
     if (error) {
-      Alert.alert('Error', error.message);
+      crossAlert('Error', error.message);
       return;
     }
     load();

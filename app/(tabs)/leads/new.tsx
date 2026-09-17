@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { crossAlert } from '@/lib/alert';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useWorkspace } from '@/context/WorkspaceContext';
@@ -18,7 +19,7 @@ export default function LeadFormScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Name required', 'Please enter a business name.');
+      crossAlert('Name required', 'Please enter a business name.');
       return;
     }
     setSaving(true);
@@ -47,7 +48,7 @@ export default function LeadFormScreen() {
 
     setSaving(false);
     if (error) {
-      Alert.alert('Error', error.message);
+      crossAlert('Error', error.message);
       return;
     }
     router.back();

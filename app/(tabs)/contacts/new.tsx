@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { crossAlert } from '@/lib/alert';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 
@@ -33,7 +34,7 @@ export default function ContactFormScreen() {
 
   const handleSave = async () => {
     if (!fullName.trim()) {
-      Alert.alert('Name required', 'Please enter a full name.');
+      crossAlert('Name required', 'Please enter a full name.');
       return;
     }
     setSaving(true);
@@ -56,7 +57,7 @@ export default function ContactFormScreen() {
     setSaving(false);
 
     if (result.error) {
-      Alert.alert('Error', result.error.message);
+      crossAlert('Error', result.error.message);
       return;
     }
     router.back();
