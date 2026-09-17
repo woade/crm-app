@@ -124,6 +124,10 @@ export interface Lead {
   types: string[];
   is_open: boolean | null;
   status: LeadStatus;
+  // The person you actually speak to at the business, captured on the call.
+  // Separate from `name`, which is the business name from Google Places.
+  contact_name: string | null;
+  contact_email: string | null;
   notes: string | null;
   call_log: string[];
   manual_has_site: boolean;

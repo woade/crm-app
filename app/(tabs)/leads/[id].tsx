@@ -21,6 +21,8 @@ export default function LeadDetailScreen() {
   const router = useRouter();
 
   const [lead, setLead] = useState<Lead | null>(null);
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -31,6 +33,8 @@ export default function LeadDetailScreen() {
     const { data, error } = await supabase.from('leads').select('*').eq('id', id).single();
     if (!error && data) {
       setLead(data as Lead);
+      setContactName((data as Lead).contact_name ?? '');
+      setContactEmail((data as Lead).contact_email ?? '');
       setNotes((data as Lead).notes ?? '');
     }
     setLoading(false);
@@ -68,9 +72,16 @@ export default function LeadDetailScreen() {
     await updateLead({ status, call_log: newLog });
   };
 
-  const handleSaveNotes = async () => {
+  // Contact details and notes save together — they're all filled in during
+  // or just after the same phone call, so two separate save buttons sitting
+  // on top of each other would just be extra taps.
+  const handleSaveDetails = async () => {
     setSaving(true);
-    const ok = await updateLead({ notes });
+    const ok = await updateLead({
+      contact_name: contactName.trim() || null,
+      contact_email: contactEmail.trim() || null,
+      notes,
+    });
     setSaving(false);
     if (ok) load();
   };
@@ -141,6 +152,40 @@ export default function LeadDetailScreen() {
           </Picker>
         </View>
 
+        <Text style={styles.sectionTitle}>Contact Person</Text>
+
+        <Text style={styles.label}>Name</Text>
+        <TextInput
+          style={styles.input}
+          value={contactName}
+          onChangeText={setContactName}
+          placeholder="Who did you speak to?"
+          autoCapitalize="words"
+          autoCorrect={false}
+        />
+
+        <Text style={styles.label}>Email</Text>
+        <View style={styles.emailRow}>
+          <TextInput
+            style={[styles.input, styles.emailInput]}
+            value={contactEmail}
+            onChangeText={setContactEmail}
+            placeholder="name@business.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            inputMode="email"
+          />
+          {!!contactEmail.trim() && (
+            <TouchableOpacity
+              style={styles.emailBtn}
+              onPress={() => Linking.openURL(`mailto:${contactEmail.trim()}`)}
+            >
+              <Text style={styles.actionBtnText}>✉️</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         <Text style={styles.label}>Notes</Text>
         <TextInput
           style={[styles.input, styles.multiline]}
@@ -149,8 +194,8 @@ export default function LeadDetailScreen() {
           multiline
           placeholder="What did they say? Anything to remember before the next call."
         />
-        <TouchableOpacity style={styles.saveButton} onPress={handleSaveNotes} disabled={saving}>
-          <Text style={styles.saveButtonText}>{saving ? 'Saving…' : 'Save Notes'}</Text>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSaveDetails} disabled={saving}>
+          <Text style={styles.saveButtonText}>{saving ? 'Saving…' : 'Save Details'}</Text>
         </TouchableOpacity>
 
         <Text style={styles.sectionTitle}>Call History ({(lead.call_log ?? []).length})</Text>
@@ -207,6 +252,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa',
   },
   multiline: { height: 100, textAlignVertical: 'top' },
+  emailRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  emailInput: { flex: 1 },
+  emailBtn: {
+    backgroundColor: '#eaf0ff',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
   saveButton: {
     backgroundColor: '#2f5bff',
     borderRadius: 10,

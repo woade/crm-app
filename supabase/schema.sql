@@ -93,6 +93,10 @@ create table if not exists leads (
   is_open boolean,
   status text not null default 'new'
     check (status in ('new','contacted','noanswer','interested','proposal','notinterested','notvalid')),
+  -- The person you actually speak to at the business, captured on the call.
+  -- Distinct from `name`, which is the business name from Google Places.
+  contact_name text,
+  contact_email text,
   notes text,
   call_log jsonb not null default '[]'::jsonb,
   manual_has_site boolean not null default false,
