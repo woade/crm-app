@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -28,12 +28,18 @@ export default function LeadDetailScreen() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
   const { copied, copy } = useCopyToClipboard();
   const { initials } = useWorkspace();
   const { session } = useAuth();
+  const hydrated = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
+    // Re-arm the autosave guard: loading a lead populates the fields, and
+    // that must not count as an edit or every lead you merely open would be
+    // rewritten (bumping its sync timestamp and edit stamp for no reason).
+    hydrated.current = false;
     const { data, error } = await supabase.from('leads').select('*').eq('id', id).single();
     if (!error && data) {
       setLead(data as Lead);
@@ -85,19 +91,27 @@ export default function LeadDetailScreen() {
     await updateLead({ status, call_log: newLog });
   };
 
-  // Contact details and notes save together — they're all filled in during
-  // or just after the same phone call, so two separate save buttons sitting
-  // on top of each other would just be extra taps.
-  const handleSaveDetails = async () => {
-    setSaving(true);
-    const ok = await updateLead({
-      contact_name: contactName.trim() || null,
-      contact_email: contactEmail.trim() || null,
-      notes,
-    });
-    setSaving(false);
-    if (ok) load();
-  };
+  // Autosave: nobody should have to remember a Save button mid-call. Waits
+  // for a short pause in typing so it isn't firing a write per keystroke.
+  // The ref guard skips the save that would otherwise fire immediately after
+  // loading a lead, when state is being populated rather than edited.
+  useEffect(() => {
+    if (!lead) return;
+    if (!hydrated.current) { hydrated.current = true; return; }
+
+    const t = setTimeout(async () => {
+      setSaving(true);
+      await updateLead({
+        contact_name: contactName.trim() || null,
+        contact_email: contactEmail.trim() || null,
+        notes,
+      });
+      setSaving(false);
+      setSavedAt(Date.now());
+    }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contactName, contactEmail, notes]);
 
   if (loading || !lead) return <ActivityIndicator style={{ marginTop: 60 }} />;
 
@@ -179,7 +193,7 @@ export default function LeadDetailScreen() {
           style={styles.input}
           value={contactName}
           onChangeText={setContactName}
-          placeholder="Who did you speak to?"
+          placeholder="First Name?"
           autoCapitalize="words"
           autoCorrect={false}
         />
@@ -214,9 +228,9 @@ export default function LeadDetailScreen() {
           multiline
           placeholder="What did they say? Anything to remember before the next call."
         />
-        <TouchableOpacity style={styles.saveButton} onPress={handleSaveDetails} disabled={saving}>
-          <Text style={styles.saveButtonText}>{saving ? 'Saving…' : 'Save Details'}</Text>
-        </TouchableOpacity>
+        <Text style={styles.autosaveHint}>
+          {saving ? 'Saving…' : savedAt ? '✓ Saved automatically' : 'Changes save automatically'}
+        </Text>
 
         <Text style={styles.sectionTitle}>Call History ({(lead.call_log ?? []).length})</Text>
         {(lead.call_log ?? []).length === 0 ? (
@@ -300,7 +314,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
-  saveButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  autosaveHint: { fontSize: 12, color: '#8a8f9a', marginTop: 8, textAlign: 'right' },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#1a1a2e', marginTop: 26, marginBottom: 8 },
   emptySection: { color: '#999', fontSize: 14 },
   callEntry: { paddingVertical: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#eee' },
