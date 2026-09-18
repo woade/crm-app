@@ -193,7 +193,6 @@ export default function LeadDetailScreen() {
           style={styles.input}
           value={contactName}
           onChangeText={setContactName}
-          placeholder="First Name?"
           autoCapitalize="words"
           autoCorrect={false}
         />
@@ -204,7 +203,6 @@ export default function LeadDetailScreen() {
             style={[styles.input, styles.emailInput]}
             value={contactEmail}
             onChangeText={setContactEmail}
-            placeholder="name@business.com"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -226,7 +224,6 @@ export default function LeadDetailScreen() {
           value={notes}
           onChangeText={setNotes}
           multiline
-          placeholder="What did they say? Anything to remember before the next call."
         />
         <Text style={styles.autosaveHint}>
           {saving ? 'Saving…' : savedAt ? '✓ Saved automatically' : 'Changes save automatically'}
