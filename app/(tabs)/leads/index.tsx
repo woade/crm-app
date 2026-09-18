@@ -13,6 +13,7 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { crossAlert } from '@/lib/alert';
 import { getNoWebsiteOnly } from '@/lib/settings';
 import { useCopyToClipboard } from '@/lib/clipboard';
 import { useWorkspace } from '@/context/WorkspaceContext';
@@ -144,7 +145,20 @@ export default function LeadsListScreen() {
     setLeads((prev) =>
       prev.map((l) => (l.id === item.id ? { ...l, status, call_log: newLog, ...stamp } : l))
     );
-    await supabase.from('leads').update({ status, call_log: newLog, ...stamp }).eq('id', item.id);
+
+    // The optimistic update above is why this error check matters: without it
+    // a failed write left the row looking changed while the database still
+    // held the old status, so the change appeared to "not sync" to LeadScout
+    // when it had never been saved at all. Put the row back if it fails.
+    const { error } = await supabase
+      .from('leads')
+      .update({ status, call_log: newLog, ...stamp })
+      .eq('id', item.id);
+
+    if (error) {
+      setLeads((prev) => prev.map((l) => (l.id === item.id ? item : l)));
+      crossAlert('Could not save status', error.message);
+    }
   };
 
   return (
