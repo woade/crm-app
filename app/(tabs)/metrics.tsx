@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { getHoursStatus } from '@/lib/hours';
 import { Lead } from '@/types';
 
 interface Stats {
@@ -9,7 +10,7 @@ interface Stats {
   callsThisWeek: number;
   callsAllTime: number;
   totalLeads: number;
-  noWebsiteLeads: number;
+  openNow: number;
   contacted: number;
   interested: number;
   proposal: number;
@@ -82,7 +83,10 @@ export default function MetricsScreen() {
       callsThisWeek,
       callsAllTime,
       totalLeads: leads.length,
-      noWebsiteLeads: leads.filter((l) => !hasWebsite(l)).length,
+      // Replaces the old "No Website" count, which equalled Total Leads once
+      // LeadScout started deleting the rest. How many you could call right
+      // now is the number worth glancing at.
+      openNow: leads.filter((l) => getHoursStatus(l.hours, l.utc_offset_minutes).state === 'open').length,
       contacted: leads.filter((l) => l.status === 'contacted').length,
       interested: leads.filter((l) => l.status === 'interested').length,
       proposal: leads.filter((l) => l.status === 'proposal').length,
@@ -121,7 +125,7 @@ export default function MetricsScreen() {
       <Text style={styles.sectionTitle}>Leads</Text>
       <View style={styles.cardRow}>
         <StatCard label="Total Leads" value={stats.totalLeads} />
-        <StatCard label="No Website" value={stats.noWebsiteLeads} />
+        <StatCard label="Open Right Now" value={stats.openNow} />
       </View>
 
       <Text style={styles.note}>

@@ -15,7 +15,6 @@ import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { crossAlert } from '@/lib/alert';
 import HoursBadge from '@/components/HoursBadge';
-import { getNoWebsiteOnly } from '@/lib/settings';
 import { useCopyToClipboard } from '@/lib/clipboard';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useAuth } from '@/context/AuthContext';
@@ -37,7 +36,6 @@ export default function LeadsListScreen() {
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<LeadStatus | 'all'>('new');
   const [city, setCity] = useState(ALL_CITIES);
-  const [noWebsiteOnly, setNoWebsiteOnly] = useState(true);
   const { copied, copy } = useCopyToClipboard();
 
   const load = useCallback(async () => {
@@ -70,9 +68,7 @@ export default function LeadsListScreen() {
       if (data.length < PAGE_SIZE) break;
       from += PAGE_SIZE;
     }
-    const onlyPref = await getNoWebsiteOnly();
     setLeads(all);
-    setNoWebsiteOnly(onlyPref);
     setLoading(false);
   }, []);
 
@@ -85,8 +81,13 @@ export default function LeadsListScreen() {
   const hasWebsite = (l: Lead) => !!l.website || l.manual_has_site;
 
   const websiteScoped = useMemo(
-    () => (noWebsiteOnly ? leads.filter((l) => !hasWebsite(l)) : leads),
-    [leads, noWebsiteOnly]
+    // No filtering by website any more. LeadScout deletes untouched
+    // has-website leads before they ever reach here, so the only leads that
+    // keep a website are ones you have worked - and hiding those, which this
+    // did by default, meant a business you had a meeting with disappeared the
+    // day they put up a site.
+    () => leads,
+    [leads]
   );
 
   // Cities present in the current lead list, each paired with how many of

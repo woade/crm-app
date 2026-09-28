@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import { getNoWebsiteOnly } from '@/lib/settings';
 import { useCopyToClipboard } from '@/lib/clipboard';
 import { Lead, LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, LeadStatus } from '@/types';
 import HoursBadge from '@/components/HoursBadge';
@@ -61,14 +60,12 @@ export default function LeadsListView({ fixedStatus, emptyText }: Props) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
-  const [noWebsiteOnly, setNoWebsiteOnlyState] = useState(true);
   const { copied, copy } = useCopyToClipboard();
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [all, onlyPref] = await Promise.all([fetchAllLeads(fixedStatus), getNoWebsiteOnly()]);
+    const all = await fetchAllLeads(fixedStatus);
     setLeads(all);
-    setNoWebsiteOnlyState(onlyPref);
     setLoading(false);
   }, [fixedStatus]);
 
@@ -82,14 +79,13 @@ export default function LeadsListView({ fixedStatus, emptyText }: Props) {
     const q = query.toLowerCase().trim();
     const qDigits = q.replace(/\D/g, '');
     return leads.filter((l) => {
-      if (noWebsiteOnly && hasWebsite(l)) return false;
       if (!q) return true;
       const nameMatch =
         l.name.toLowerCase().includes(q) || (l.industry ?? '').toLowerCase().includes(q);
       const phoneMatch = qDigits.length >= 3 && (l.phone ?? '').replace(/\D/g, '').includes(qDigits);
       return nameMatch || phoneMatch;
     });
-  }, [leads, query, noWebsiteOnly]);
+  }, [leads, query]);
 
   return (
     <View style={styles.container}>

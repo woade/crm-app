@@ -14,13 +14,11 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { supabase } from '@/lib/supabase';
-import { getNoWebsiteOnly, setNoWebsiteOnly } from '@/lib/settings';
 import { TeamMember } from '@/types';
 
 export default function SettingsScreen() {
   const { session, signOut } = useAuth();
   const { isMember, initials, displayName, refresh } = useWorkspace();
-  const [noWebsiteOnly, setNoWebsiteOnlyState] = useState(true);
   const [loaded, setLoaded] = useState(false);
 
   const [team, setTeam] = useState<TeamMember[]>([]);
@@ -33,10 +31,6 @@ export default function SettingsScreen() {
   const [teamMsg, setTeamMsg] = useState<{ kind: 'error' | 'ok'; text: string } | null>(null);
 
   useEffect(() => {
-    getNoWebsiteOnly().then((v) => {
-      setNoWebsiteOnlyState(v);
-      setLoaded(true);
-    });
   }, []);
 
   const loadTeam = useCallback(async () => {
@@ -136,11 +130,6 @@ export default function SettingsScreen() {
     loadTeam();
   };
 
-  const handleToggle = async (value: boolean) => {
-    setNoWebsiteOnlyState(value);
-    await setNoWebsiteOnly(value);
-  };
-
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 24, paddingTop: 40, paddingBottom: 60 }}>
       <Text style={styles.label}>Signed in as</Text>
@@ -155,17 +144,6 @@ export default function SettingsScreen() {
           You’re on {displayName ? `${displayName}’s` : 'a'} team. Your edits are marked “{initials}”.
         </Text>
       )}
-
-      <Text style={styles.sectionTitle}>Leads</Text>
-      <View style={styles.row}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.rowTitle}>No website only</Text>
-          <Text style={styles.rowSub}>Hide leads that already have a website, everywhere in the app.</Text>
-        </View>
-        {loaded && (
-          <Switch value={noWebsiteOnly} onValueChange={handleToggle} trackColor={{ true: '#2f5bff' }} />
-        )}
-      </View>
 
       {/* Only the account that owns the leads manages the team. A rep sees
           their own badge above but no controls. */}
