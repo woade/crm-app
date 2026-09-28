@@ -173,11 +173,10 @@ export default function LeadDetailScreen() {
           )}
         </View>
 
-        {!lead.website && !lead.manual_has_site && (
-          <View style={styles.noWebsiteBadge}>
-            <Text style={styles.noWebsiteText}>No website found — good candidate</Text>
-          </View>
-        )}
+        {/* "No website found - good candidate" used to sit here. Now that
+            LeadScout deletes has-website leads outright it was true of every
+            lead on the screen, so it told you nothing and pushed the fields
+            you actually fill in during a call further down. */}
 
         <Text style={styles.label}>Status</Text>
         <View style={styles.statusPickerWrap}>
@@ -277,13 +276,6 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   actionBtnText: { color: '#2f5bff', fontWeight: '600', fontSize: 13 },
-  noWebsiteBadge: {
-    marginTop: 14,
-    backgroundColor: '#fff4e5',
-    borderRadius: 8,
-    padding: 10,
-  },
-  noWebsiteText: { color: '#a15c00', fontSize: 13, fontWeight: '600' },
   label: { fontSize: 13, color: '#666', marginBottom: 6, marginTop: 22, fontWeight: '600' },
   statusPickerWrap: {
     borderWidth: 1,
@@ -308,13 +300,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 12,
-  },
-  saveButton: {
-    backgroundColor: '#2f5bff',
-    borderRadius: 10,
-    padding: 12,
-    alignItems: 'center',
-    marginTop: 10,
   },
   autosaveHint: { fontSize: 12, color: '#8a8f9a', marginTop: 8, textAlign: 'right' },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#1a1a2e', marginTop: 26, marginBottom: 8 },

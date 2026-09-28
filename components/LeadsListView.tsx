@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase';
 import { getNoWebsiteOnly } from '@/lib/settings';
 import { useCopyToClipboard } from '@/lib/clipboard';
 import { Lead, LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, LeadStatus } from '@/types';
+import HoursBadge from '@/components/HoursBadge';
 
 const hasWebsite = (l: Lead) => !!l.website || l.manual_has_site;
 
@@ -117,11 +118,10 @@ export default function LeadsListView({ fixedStatus, emptyText }: Props) {
               <View style={{ flex: 1 }}>
                 <View style={styles.nameRow}>
                   <Text style={styles.name}>{item.name}</Text>
-                  {!hasWebsite(item) && (
-                    <View style={styles.noWebBadge}>
-                      <Text style={styles.noWebBadgeText}>No Website</Text>
-                    </View>
-                  )}
+                  {/* Same swap as the main Leads list: "No Website" is true
+                      of every lead now that LeadScout deletes the rest, so
+                      open/closed earns the space instead. */}
+                  <HoursBadge hours={item.hours} utcOffsetMinutes={item.utc_offset_minutes} compact />
                 </View>
                 <Text style={styles.sub}>
                   {item.industry ? `${item.industry} · ` : ''}
@@ -174,13 +174,6 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
   name: { fontSize: 16, fontWeight: '600', color: '#1a1a2e' },
   phone: { fontSize: 13, color: '#2f5bff', marginTop: 2, fontWeight: '500' },
-  noWebBadge: {
-    backgroundColor: '#fdeceb',
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  noWebBadgeText: { fontSize: 10, color: '#c94a4a', fontWeight: '700' },
   sub: { fontSize: 13, color: '#888', marginTop: 2 },
   status: { fontSize: 12, color: '#555', marginTop: 4 },
   callButton: {

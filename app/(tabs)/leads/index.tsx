@@ -226,13 +226,12 @@ export default function LeadsListScreen() {
                       <Text style={styles.editedBadgeText}>{item.last_edited_initials}</Text>
                     </View>
                   )}
-                  {!hasWebsite(item) && (
-                    <View style={styles.noWebBadge}>
-                      <Text style={styles.noWebBadgeText}>No Website</Text>
-                    </View>
-                  )}
-                  {/* Compact form: a dot and one word. Enough to skip a row
-                      while working down the list without crowding it. */}
+                  {/* The "No Website" badge used to sit here. LeadScout now
+                      deletes has-website leads outright, so it appeared on
+                      every single row and carried no information - it was
+                      just taking the space this badge needs. Whether they are
+                      open right now is the thing worth knowing mid-call.
+                      Compact form: a dot and one word. */}
                   <HoursBadge hours={item.hours} utcOffsetMinutes={item.utc_offset_minutes} compact />
                 </View>
                 <Text style={styles.sub}>
@@ -300,13 +299,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
   },
   nameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
-  noWebBadge: {
-    backgroundColor: '#fdeceb',
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  noWebBadgeText: { fontSize: 10, color: '#c94a4a', fontWeight: '700' },
   // Initials of whoever last edited this lead, e.g. "B" for a sales rep.
   editedBadge: {
     backgroundColor: '#eef0ff',
