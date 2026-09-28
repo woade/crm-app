@@ -14,6 +14,7 @@ import { Picker } from '@react-native-picker/picker';
 import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { crossAlert } from '@/lib/alert';
+import HoursBadge from '@/components/HoursBadge';
 import { getNoWebsiteOnly } from '@/lib/settings';
 import { useCopyToClipboard } from '@/lib/clipboard';
 import { useWorkspace } from '@/context/WorkspaceContext';
@@ -230,6 +231,9 @@ export default function LeadsListScreen() {
                       <Text style={styles.noWebBadgeText}>No Website</Text>
                     </View>
                   )}
+                  {/* Compact form: a dot and one word. Enough to skip a row
+                      while working down the list without crowding it. */}
+                  <HoursBadge hours={item.hours} utcOffsetMinutes={item.utc_offset_minutes} compact />
                 </View>
                 <Text style={styles.sub}>
                   {item.industry ? `${item.industry} · ` : ''}

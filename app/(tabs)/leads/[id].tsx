@@ -10,6 +10,7 @@ import {
   Linking,
 } from 'react-native';
 import { crossAlert } from '@/lib/alert';
+import HoursBadge from '@/components/HoursBadge';
 import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect, useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -132,6 +133,10 @@ export default function LeadDetailScreen() {
           {lead.city ?? ''}
         </Text>
         {!!lead.address && <Text style={styles.address}>{lead.address}</Text>}
+
+        {/* Above the phone number on purpose: you should see "Closed" before
+            your thumb reaches Call, not after. */}
+        <HoursBadge hours={lead.hours} utcOffsetMinutes={lead.utc_offset_minutes} />
 
         {!!lead.phone && (
           <TouchableOpacity onPress={() => copy(lead.phone!)} hitSlop={{ top: 8, bottom: 8, left: 0, right: 40 }}>

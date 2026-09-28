@@ -122,7 +122,16 @@ export interface Lead {
   rating: number | null;
   reviews: number | null;
   types: string[];
+  // Snapshot from scan time. Kept for compatibility, but do NOT show it: it
+  // answers "was this open when LeadScout found it", not "is it open now".
+  // Use getHoursStatus(hours, utc_offset_minutes) from lib/hours instead.
   is_open: boolean | null;
+  // Google's weekly schedule, joined with "; ":
+  // "Monday: 9:00 AM - 5:00 PM; Tuesday: Closed; ..."
+  hours: string | null;
+  // The business's own offset from UTC, so a lead in another state is judged
+  // against its clock rather than the one in your pocket.
+  utc_offset_minutes: number | null;
   status: LeadStatus;
   // The person you actually speak to at the business, captured on the call.
   // Separate from `name`, which is the business name from Google Places.
