@@ -15,6 +15,11 @@ export default function LeadFormScreen() {
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
+  // You add a lead by hand because you met someone. Capturing who, there and
+  // then, is the point - it is what you need to send the demo afterwards.
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -36,7 +41,13 @@ export default function LeadFormScreen() {
       address: address.trim() || null,
       phone: phone.trim() || null,
       website: website.trim() || null,
-      status: 'new',
+      contact_name: contactName.trim() || null,
+      contact_email: contactEmail.trim() || null,
+      notes: notes.trim() || null,
+      // Interested, not New: you met them in person, which is further along
+      // than a cold scan result. It also puts the lead in the protected set,
+      // so no automatic cleanup can ever remove it.
+      status: 'interested',
       // ownerId, not the current user: when a sales rep adds a lead it has to
       // land in the owner's pile. Stamping it with the rep's own id would
       // create a lead only they could see.
@@ -80,6 +91,23 @@ export default function LeadFormScreen() {
         autoCapitalize="none"
       />
 
+      <Text style={styles.label}>Contact person</Text>
+      <TextInput style={styles.input} value={contactName} onChangeText={setContactName} placeholder="Who you spoke to" autoCapitalize="words" />
+
+      <Text style={styles.label}>Their email</Text>
+      <TextInput
+        style={styles.input}
+        value={contactEmail}
+        onChangeText={setContactEmail}
+        placeholder="For the demo / Zoom invite"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        inputMode="email"
+      />
+
+      <Text style={styles.label}>Notes</Text>
+      <TextInput style={[styles.input, styles.multiline]} value={notes} onChangeText={setNotes} multiline placeholder="Met at the chamber breakfast, wants a quote" />
+
       <TouchableOpacity style={styles.button} onPress={handleSave} disabled={saving}>
         {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Add Lead</Text>}
       </TouchableOpacity>
@@ -98,6 +126,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#fafafa',
   },
+  multiline: { height: 90, textAlignVertical: 'top' },
   button: {
     backgroundColor: '#2f5bff',
     borderRadius: 10,
